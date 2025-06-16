@@ -85,43 +85,42 @@ public class RosInterface : MonoBehaviour
     private void PublishSheepPoses()
     {
         List<GameObject> sheepList = new List<GameObject>(GameObject.FindGameObjectsWithTag("Sheep"));
-        List<PoseStamped> sheepPoses = new List<PoseStamped>();
+        PoseArray poseArray = new PoseArray
+        {
+            header = new Header
+            {
+                frame_id = "map",
+                stamp = new Time
+                {
+                    secs = (int)Time.time,
+                    nsecs = (uint)((Time.time % 1) * 1e9)
+                }
+            },
+            poses = new List<Pose>()
+        };
 
         foreach (GameObject sheep in sheepList)
         {
-            PoseStamped poseStamped = new PoseStamped
+            Pose pose = new Pose
             {
-                header = new Header
+                position = new Point
                 {
-                    frame_id = "map",
-                    stamp = new Time
-                    {
-                        secs = (int)Time.time,
-                        nsecs = (uint)((Time.time % 1) * 1e9)
-                    }
+                    x = UnityToRosPosition(sheep.transform.position).x,
+                    y = UnityToRosPosition(sheep.transform.position).y,
+                    z = UnityToRosPosition(sheep.transform.position).z
                 },
-                pose = new Pose
+                orientation = new Quaternion
                 {
-                    position = new Point
-                    {
-                        x = UnityToRosPosition(sheep.transform.position).x,
-                        y = UnityToRosPosition(sheep.transform.position).y,
-                        z = UnityToRosPosition(sheep.transform.position).z
-                    },
-                    orientation = new Quaternion
-                    {
-                        x = UnityToRosRotation(sheep.transform.rotation).x,
-                        y = UnityToRosRotation(sheep.transform.rotation).y,
-                        z = UnityToRosRotation(sheep.transform.rotation).z,
-                        w = UnityToRosRotation(sheep.transform.rotation).w
-                    }
+                    x = UnityToRosRotation(sheep.transform.rotation).x,
+                    y = UnityToRosRotation(sheep.transform.rotation).y,
+                    z = UnityToRosRotation(sheep.transform.rotation).z,
+                    w = UnityToRosRotation(sheep.transform.rotation).w
                 }
             };
-
-            sheepPoses.Add(poseStamped);
+            poseArray.poses.Add(pose);
         }
 
-        rosSocket.Publish(sheepPosesTopic, sheepPoses);
+        rosSocket.Publish(sheepPosesTopic, poseArray);
     }
 
     private void DogCommandCallback(Float64MultiArray command)
